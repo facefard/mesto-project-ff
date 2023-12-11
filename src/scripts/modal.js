@@ -20,8 +20,7 @@ export function closePopup(modal) {
   modal.classList.remove('popup_is-opened');
   modal.classList.add('popup_is-animated');
   document.removeEventListener('keydown', handleEscape);
-  const overlay = modal;
-  overlay.removeEventListener('click', closeModalOverlay);
+  modal.removeEventListener('click', closeModalOverlay);
 }
 
 export function closeModalOverlay(evt) {

@@ -65,7 +65,7 @@ function handleNewCardFormSubmit(evt) {
   const newPlaceName = placeNameInput.value;
   const newLink = linkInput.value;
 
-  const cardElement = createCard({ name: newPlaceName, link: newLink }, deleteCard, addLike, openImagePopup);
+  const cardElement = createCard({ name: newPlaceName, link: newLink }, { deleteCard, addLike, openImagePopup });
 
   cardsContainer.prepend(cardElement);
 
