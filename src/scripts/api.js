@@ -1,80 +1,69 @@
 import { renderInitialCards } from ".";
 import { closePopup } from "./modal";
 import { clearValidation } from "./validation";
+import { checkResponse } from "./utils";
 
 const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719'; // Replace with your group identifier
 const cohortId = 'wff-cohort-3'; // Replace with your token
 
-const apiUrlUser = `https://nomoreparties.co/v1/${cohortId}/users/me`;
-const apiUrlCards = `https://nomoreparties.co/v1/${cohortId}/cards`;
+const config = {
+  baseUrl: 'https://nomoreparties.co/v1/wff-cohort-3',
+  headers: {
+    authorization: '1eebc460-8f14-44d3-8f3a-287aa4f24719',
+    'Content-Type': 'application/json',
+  },
+};
+
+const apiUrlUser = `${config.baseUrl}/users/me`;
+const apiUrlCards = `${config.baseUrl}/cards`;
 
 export const fetchData = (url, token) => {
   return fetch(url, {
-    headers: {
-      authorization: `${token}`
-    }
+    headers: config.headers
   })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-      return response.json();
-    })
-    .catch(error => console.error(error));
+  .then(checkResponse)
 };
 
 export const updateProfileInfo = (name, about) => {
-  const updateUrl = `https://nomoreparties.co/v1/${cohortId}/users/me`;
+  const editProfileForm = document.forms['edit-profile'];
+  const updateUrl = `${config.baseUrl}/users/me`;
+  const editProfilePopup = document.querySelector('.popup_type_edit');
+  const saveButton = editProfileForm.querySelector('.popup__button');
 
   fetch(updateUrl, {
     method: 'PATCH',
-    headers: {
-      authorization: token,
-      'Content-Type': 'application/json'
-    },
+    headers: config.headers,
     body: JSON.stringify({
       name: name,
       about: about
     })
   })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(updatedUserInfo => {
-      // Обновление информации на странице
-      updateUserInfo(updatedUserInfo);
-    })
-    .catch(error => console.error('Ошибка при обновлении профиля:', error));
+  .then(checkResponse)
+  .then(() => {
+    closePopup(editProfilePopup);
+    saveButton.textContent = 'Сохранить';
+  })
 };
 
 export function updateAvatar(newAvatarUrl) {
+  const avatarEditForm = document.forms['avatar-edit'];
   const avatarImage = document.querySelector('.profile__image');
-  const updateAvatarUrl = `https://nomoreparties.co/v1/${cohortId}/users/me/avatar`;
+  const updateAvatarUrl = `${config.baseUrl}/users/me/avatar`;
+  const saveButton = avatarEditForm.querySelector('.popup__button');
 
   fetch(updateAvatarUrl, {
     method: 'PATCH',
-    headers: {
-      authorization: token,
-      'Content-Type': 'application/json',
-    },
+    headers: config.headers,
     body: JSON.stringify({
       avatar: newAvatarUrl,
     }),
   })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-      }
-      return response.json();
-    })
+  .then(checkResponse)
     .then(updatedUserInfo => {
       // Обновление информации на странице
       avatarImage.style.backgroundImage = `url('${updatedUserInfo.avatar}')`;
-    })
-    .catch(error => console.error(error));
+      saveButton.textContent = 'Сохранить';
+    })  
 }
 
 export const clearCards = () => {
@@ -86,27 +75,18 @@ export const clearCards = () => {
 
 export const addNewCardToServer = ({ name, link }) => {
   const newCardPopup = document.querySelector('.popup_type_new-card');
-  const newCardForm = document.forms['new-place'];
   const saveButton = newCardForm.querySelector('.popup__button');
-  const addCardUrl = `https://nomoreparties.co/v1/${cohortId}/cards`;
+  const addCardUrl = `${config.baseUrl}/cards`;
 
   fetch(addCardUrl, {
     method: 'POST',
-    headers: {
-      authorization: token,
-      'Content-Type': 'application/json'
-    },
+    headers: config.headers,
     body: JSON.stringify({
       name: name,
       link: link,
     })
   })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-      }
-      return response.json();
-    })
+  .then(checkResponse)
     .then(newCardData => {
       // Обработка ответа от сервера при необходимости
       console.log('Новая карточка добавлена:', newCardData);
@@ -124,12 +104,33 @@ export const addNewCardToServer = ({ name, link }) => {
       
       closePopup(newCardPopup);
       newCardForm.reset();
-      clearValidation(newCardForm);
+      clearValidation(newCardForm, {
+        formSelector: '.popup',
+        inputSelector: '.popup__input',
+        submitButtonSelector: '.popup__button',
+        inactiveButtonClass: 'button_inactive',
+        inputErrorClass: 'popup__input_type_error',
+        errorClass: 'popup__input-error_active'
+      });
     })
-    .catch(error => {
-      console.error(error);
-      // Возврат текста кнопки к исходному значению в случае ошибки
-      saveButton.textContent = 'Сохранить';
-    });
 };
+
+export function deleteCard(cardId) {
+  const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719';
+  const cohortId = 'wff-cohort-3';
+  const deleteCardUrl = `https://nomoreparties.co/v1/${cohortId}/cards/${cardId}`;
+
+  fetch(deleteCardUrl, {
+    method: 'DELETE',
+    headers: {
+      authorization: token,
+    },
+  })
+  .then(checkResponse)
+    .then(deletedCardData => {
+      // Если нужно обработать ответ от сервера, можно сделать это здесь
+      console.log('Карточка удалена:', deletedCardData);
+    })
+    .catch(error => console.error(error));
+}
 

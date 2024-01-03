@@ -1,3 +1,5 @@
+import { checkResponse } from "./utils";
+
 export function createCard(cardData, { deleteCard, addLike, openImagePopup }, currentUserId) {
   const cardTemplate = document.querySelector('#card-template').content;
   const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
@@ -47,29 +49,7 @@ export function addCard(cardElement, cardsContainer) {
   cardsContainer.append(cardElement);
 }
 
-export function deleteCard(cardId) {
-  const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719';
-  const cohortId = 'wff-cohort-3';
-  const deleteCardUrl = `https://nomoreparties.co/v1/${cohortId}/cards/${cardId}`;
 
-  fetch(deleteCardUrl, {
-    method: 'DELETE',
-    headers: {
-      authorization: token,
-    },
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(deletedCardData => {
-      // Если нужно обработать ответ от сервера, можно сделать это здесь
-      console.log('Карточка удалена:', deletedCardData);
-    })
-    .catch(error => console.error(error));
-}
 
 
 export function addLike(likeButton, cardId) {
@@ -85,12 +65,7 @@ export function addLike(likeButton, cardId) {
       authorization: token,
     },
   })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-      }
-      return response.json();
-    })
+  .then(checkResponse)
     .then(updatedCardData => {
       const likesCount = updatedCardData.likes.length;
       updateLikeState(likeButton, isLiked, likesCount);

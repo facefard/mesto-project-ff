@@ -1,8 +1,8 @@
 import '../pages/index.css'
-import { createCard, deleteCard, addCard, addLike } from './card';
+import { createCard, addCard, addLike } from './card';
 import { handleEscape, openPopup, closePopup, closeModalOverlay } from './modal';
 import { enableValidation, clearValidation } from './validation';
-import { fetchData, updateProfileInfo, updateAvatar, addNewCardToServer, clearCards} from './api';
+import { fetchData, updateProfileInfo, updateAvatar, addNewCardToServer, clearCards, deleteCard} from './api';
 
 const cardsContainer = document.querySelector('.places__list');
 const editProfilePopup = document.querySelector('.popup_type_edit');
@@ -37,7 +37,14 @@ closeButtonImagePopup.addEventListener('click', () => closePopup(imagePopup));
 
 openEditProfilePopupButton.addEventListener('click', () => {
   openPopup(editProfilePopup);
-  clearValidation(editProfileForm);
+  clearValidation(editProfileForm, {
+    formSelector: '.popup',
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'button_inactive',
+    inputErrorClass: 'popup__input_type_error',
+    errorClass: 'popup__input-error_active'
+  });
 
   const currentName = profileTitle.textContent;
   const currentDescription = profileDescription.textContent;
@@ -63,7 +70,6 @@ function handleEditProfileFormSubmit(evt) {
   profileTitle.textContent = newName;
   profileDescription.textContent = newDescription;
 
-  closePopup(editProfilePopup);
   updateProfileInfo(newName, newDescription);
 }
 
@@ -94,7 +100,14 @@ function openImagePopup(imageSrc, imageAlt) {
 }
 
 
-enableValidation();
+enableValidation({
+  formSelector: '.popup',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'button_inactive',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__input-error_active'
+}); 
 
 
 const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719';
@@ -130,18 +143,6 @@ export const renderInitialCards = (cardsData) => {
     addCard(cardElement, cardsContainer);
   });
 };
-
-
-
-fetchData(apiUrlUser, token)
-  .then(userData => {
-    updateUserInfo(userData);
-  });
-
-fetchData(apiUrlCards, token)
-  .then(cardsData => {
-    renderInitialCards(cardsData);
-  });
 
 closeButtonEditAvatar.addEventListener('click', () => closePopup(avatarEditPopup))
 
