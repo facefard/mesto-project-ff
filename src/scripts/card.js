@@ -21,14 +21,20 @@ export function createCard(cardData, { deleteCard, addLike, openImagePopup }, cu
     deleteButton.style.display = 'none';
   }
 
-  deleteButton.addEventListener('click', () => {
-      // Добавьте проверку наличия свойства _id перед его использованием
-      if (cardData._id) {
-        deleteCard(cardData._id);
-        cardElement.remove();
-      } else {
-        console.error('Отсутствует свойство _id в объекте cardData');
-      }
+  deleteButton.addEventListener('click', () => { 
+    // Добавьте проверку наличия свойства _id перед его использованием 
+    if (cardData._id) { 
+      deleteCard(cardData._id)
+        .then(() => {
+          cardElement.remove();
+        })
+        .catch((error) => {
+          // Обработка ошибки при удалении карточки
+          console.error('Ошибка при удалении карточки:', error);
+        });
+    } else {
+      console.error('Отсутствует свойство _id в объекте cardData');
+    }
   });
 
   likeButton.addEventListener('click', () => {
@@ -51,30 +57,3 @@ export function addCard(cardElement, cardsContainer) {
 
 
 
-
-export function addLike(likeButton, cardId) {
-  const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719';
-  const cohortId = 'wff-cohort-3';
-  const isLiked = likeButton.classList.contains('card__like-button_is-active');
-  const method = isLiked ? 'DELETE' : 'PUT';
-  const likeCardUrl = `https://nomoreparties.co/v1/${cohortId}/cards/likes/${cardId}`;
-
-  fetch(likeCardUrl, {
-    method: method,
-    headers: {
-      authorization: token,
-    },
-  })
-  .then(checkResponse)
-    .then(updatedCardData => {
-      const likesCount = updatedCardData.likes.length;
-      updateLikeState(likeButton, isLiked, likesCount);
-    })
-    .catch(error => console.error(error));
-}
-
-function updateLikeState(likeButton, isLiked, likesCount) {
-  likeButton.classList.toggle('card__like-button_is-active', !isLiked);
-  const likeCountElement = likeButton.closest('.places__item').querySelector('.card__like-count');
-  likeCountElement.textContent = likesCount;
-}

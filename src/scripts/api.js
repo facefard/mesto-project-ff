@@ -3,9 +3,6 @@ import { closePopup } from "./modal";
 import { clearValidation } from "./validation";
 import { checkResponse } from "./utils";
 
-const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719'; // Replace with your group identifier
-const cohortId = 'wff-cohort-3'; // Replace with your token
-
 const config = {
   baseUrl: 'https://nomoreparties.co/v1/wff-cohort-3',
   headers: {
@@ -13,9 +10,6 @@ const config = {
     'Content-Type': 'application/json',
   },
 };
-
-const apiUrlUser = `${config.baseUrl}/users/me`;
-const apiUrlCards = `${config.baseUrl}/cards`;
 
 export const fetchData = (url, token) => {
   return fetch(url, {
@@ -25,12 +19,9 @@ export const fetchData = (url, token) => {
 };
 
 export const updateProfileInfo = (name, about) => {
-  const editProfileForm = document.forms['edit-profile'];
   const updateUrl = `${config.baseUrl}/users/me`;
-  const editProfilePopup = document.querySelector('.popup_type_edit');
-  const saveButton = editProfileForm.querySelector('.popup__button');
 
-  fetch(updateUrl, {
+  return fetch(updateUrl, {
     method: 'PATCH',
     headers: config.headers,
     body: JSON.stringify({
@@ -39,31 +30,19 @@ export const updateProfileInfo = (name, about) => {
     })
   })
   .then(checkResponse)
-  .then(() => {
-    closePopup(editProfilePopup);
-    saveButton.textContent = 'Сохранить';
-  })
 };
 
 export function updateAvatar(newAvatarUrl) {
-  const avatarEditForm = document.forms['avatar-edit'];
-  const avatarImage = document.querySelector('.profile__image');
   const updateAvatarUrl = `${config.baseUrl}/users/me/avatar`;
-  const saveButton = avatarEditForm.querySelector('.popup__button');
 
-  fetch(updateAvatarUrl, {
+  return fetch(updateAvatarUrl, {
     method: 'PATCH',
     headers: config.headers,
     body: JSON.stringify({
       avatar: newAvatarUrl,
     }),
   })
-  .then(checkResponse)
-    .then(updatedUserInfo => {
-      // Обновление информации на странице
-      avatarImage.style.backgroundImage = `url('${updatedUserInfo.avatar}')`;
-      saveButton.textContent = 'Сохранить';
-    })  
+  .then(checkResponse) 
 }
 
 export const clearCards = () => {
@@ -74,11 +53,9 @@ export const clearCards = () => {
 };
 
 export const addNewCardToServer = ({ name, link }) => {
-  const newCardPopup = document.querySelector('.popup_type_new-card');
-  const saveButton = newCardForm.querySelector('.popup__button');
   const addCardUrl = `${config.baseUrl}/cards`;
 
-  fetch(addCardUrl, {
+  return fetch(addCardUrl, {
     method: 'POST',
     headers: config.headers,
     body: JSON.stringify({
@@ -87,50 +64,36 @@ export const addNewCardToServer = ({ name, link }) => {
     })
   })
   .then(checkResponse)
-    .then(newCardData => {
-      // Обработка ответа от сервера при необходимости
-      console.log('Новая карточка добавлена:', newCardData);
-      
-
-      // Обновление информации на странице после добавления карточки
-      fetchData(apiUrlCards, token)
-        .then(cardsData => {
-          clearCards();
-          renderInitialCards(cardsData);
-        });
-      
-      // Возврат текста кнопки к исходному значению
-      saveButton.textContent = 'Сохранить';
-      
-      closePopup(newCardPopup);
-      newCardForm.reset();
-      clearValidation(newCardForm, {
-        formSelector: '.popup',
-        inputSelector: '.popup__input',
-        submitButtonSelector: '.popup__button',
-        inactiveButtonClass: 'button_inactive',
-        inputErrorClass: 'popup__input_type_error',
-        errorClass: 'popup__input-error_active'
-      });
-    })
 };
 
 export function deleteCard(cardId) {
-  const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719';
-  const cohortId = 'wff-cohort-3';
-  const deleteCardUrl = `https://nomoreparties.co/v1/${cohortId}/cards/${cardId}`;
+  const deleteCardUrl = `${config.baseUrl}/cards/${cardId}`;
 
-  fetch(deleteCardUrl, {
+  return fetch(deleteCardUrl, {
     method: 'DELETE',
-    headers: {
-      authorization: token,
-    },
+    headers: config.headers
   })
   .then(checkResponse)
-    .then(deletedCardData => {
-      // Если нужно обработать ответ от сервера, можно сделать это здесь
-      console.log('Карточка удалена:', deletedCardData);
-    })
-    .catch(error => console.error(error));
 }
 
+export function addLike(likeButton, cardId) {
+  const isLiked = likeButton.classList.contains('card__like-button_is-active');
+  const method = isLiked ? 'DELETE' : 'PUT';
+  const likeCardUrl = `${config.baseUrl}/cards/likes/${cardId}`;
+
+  fetch(likeCardUrl, {
+    method: method,
+    headers: config.headers
+  })
+  .then(checkResponse)
+  .then(updatedCardData => {
+    const likesCount = updatedCardData.likes.length;
+    updateLikeState(likeButton, isLiked, likesCount);
+  })
+}
+
+function updateLikeState(likeButton, isLiked, likesCount) {
+  likeButton.classList.toggle('card__like-button_is-active', !isLiked);
+  const likeCountElement = likeButton.closest('.places__item').querySelector('.card__like-count');
+  likeCountElement.textContent = likesCount;
+}
