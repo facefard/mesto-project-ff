@@ -6,6 +6,7 @@ export function createCard(cardData, { deleteCard, addLike, openImagePopup }, cu
   const cardImage = cardElement.querySelector('.card__image');
   const likeButton = cardElement.querySelector('.card__like-button');
   const deleteButton = cardElement.querySelector('.card__delete-button');
+  const isLiked = likeButton.classList.contains('card__like-button_is-active');
 
   cardImage.src = cardData.link;
   cardImage.alt = cardData.name;
@@ -39,7 +40,11 @@ export function createCard(cardData, { deleteCard, addLike, openImagePopup }, cu
 
   likeButton.addEventListener('click', () => {
     if (cardData._id) {
-      addLike(likeButton, cardData._id);
+      addLike(likeButton, cardData._id)
+        .then(updatedCardData => {
+          const likesCount = updatedCardData.likes.length;
+          updateLikeState(likeButton, isLiked, likesCount);
+        })
     } else {
       console.error('Отсутствует свойство _id в объекте cardData');
     }
@@ -51,9 +56,15 @@ export function createCard(cardData, { deleteCard, addLike, openImagePopup }, cu
   return cardElement;
 }
 
-export function addCard(cardElement, cardsContainer) {
-  cardsContainer.append(cardElement);
+export const clearCards = () => {
+  const cardsContainer = document.querySelector('.places__list');
+  while (cardsContainer.firstChild) {
+    cardsContainer.removeChild(cardsContainer.firstChild);
+  }
+};
+
+function updateLikeState(likeButton, isLiked, likesCount) {
+  likeButton.classList.toggle('card__like-button_is-active', !isLiked);
+  const likeCountElement = likeButton.closest('.places__item').querySelector('.card__like-count');
+  likeCountElement.textContent = likesCount;
 }
-
-
-

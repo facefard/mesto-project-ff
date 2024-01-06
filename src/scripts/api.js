@@ -45,13 +45,6 @@ export function updateAvatar(newAvatarUrl) {
   .then(checkResponse) 
 }
 
-export const clearCards = () => {
-  const cardsContainer = document.querySelector('.places__list');
-  while (cardsContainer.firstChild) {
-    cardsContainer.removeChild(cardsContainer.firstChild);
-  }
-};
-
 export const addNewCardToServer = ({ name, link }) => {
   const addCardUrl = `${config.baseUrl}/cards`;
 
@@ -81,19 +74,19 @@ export function addLike(likeButton, cardId) {
   const method = isLiked ? 'DELETE' : 'PUT';
   const likeCardUrl = `${config.baseUrl}/cards/likes/${cardId}`;
 
-  fetch(likeCardUrl, {
+  return fetch(likeCardUrl, {
     method: method,
     headers: config.headers
   })
   .then(checkResponse)
-  .then(updatedCardData => {
-    const likesCount = updatedCardData.likes.length;
-    updateLikeState(likeButton, isLiked, likesCount);
-  })
 }
 
-function updateLikeState(likeButton, isLiked, likesCount) {
-  likeButton.classList.toggle('card__like-button_is-active', !isLiked);
-  const likeCountElement = likeButton.closest('.places__item').querySelector('.card__like-count');
-  likeCountElement.textContent = likesCount;
+export function getUserData() {
+  const apiUrlUser = `${config.baseUrl}/users/me`;
+  return fetchData(apiUrlUser, config.headers);
+}
+
+export function getCardsData() {
+  const apiUrlCards = `${config.baseUrl}/cards`;
+  return fetchData(apiUrlCards, config.headers);
 }

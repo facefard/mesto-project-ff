@@ -1,8 +1,8 @@
 import '../pages/index.css'
-import { createCard, addCard } from './card';
+import { createCard, clearCards } from './card';
 import { handleEscape, openPopup, closePopup, closeModalOverlay } from './modal';
 import { enableValidation, clearValidation } from './validation';
-import { fetchData, updateProfileInfo, updateAvatar, addNewCardToServer, clearCards, deleteCard, addLike} from './api';
+import { fetchData, updateProfileInfo, updateAvatar, addNewCardToServer, deleteCard, addLike, getCardsData, getUserData} from './api';
 import { checkResponse } from './utils';
 
 const cardsContainer = document.querySelector('.places__list');
@@ -29,6 +29,15 @@ const closeButtonEditAvatar = avatarEditPopup.querySelector('.popup__close');
 const saveButton = editProfileForm.querySelector('.popup__button');
 const avatarImage = document.querySelector('.profile__image');
 const closeButtons = document.querySelectorAll('.popup__close');
+const validationConfig = {
+  formSelector: '.popup',
+  contentSelector: '.popup__content',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'button_inactive',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__input-error_active'
+};
 let userId;
 
 // с окончанием `s` нужно обязательно, так как много кнопок
@@ -42,15 +51,7 @@ closeButtons.forEach((button) => {
 
 openEditProfilePopupButton.addEventListener('click', () => {
   openPopup(editProfilePopup);
-  clearValidation(editProfileForm, {
-    formSelector: '.popup',
-    contentSelector: '.popup__content',
-    inputSelector: '.popup__input',
-    submitButtonSelector: '.popup__button',
-    inactiveButtonClass: 'button_inactive',
-    inputErrorClass: 'popup__input_type_error',
-    errorClass: 'popup__input-error_active'
-  });
+  clearValidation(editProfileForm, validationConfig);
 
   const currentName = profileTitle.textContent;
   const currentDescription = profileDescription.textContent;
@@ -62,6 +63,9 @@ openEditProfilePopupButton.addEventListener('click', () => {
 
 openNewCardPopupButton.addEventListener('click', () => openPopup(newCardPopup));
 
+function addCard(cardElement, cardsContainer) {
+  cardsContainer.append(cardElement);
+}
 
 function handleEditProfileFormSubmit(evt) {
   evt.preventDefault();
@@ -78,11 +82,13 @@ function handleEditProfileFormSubmit(evt) {
       // Обновление профиля немедленно после успешного выполнения запроса
       updateUserInfo(updatedUserInfo);
       closePopup(editProfilePopup);
-      saveButton.textContent = 'Сохранить';
     })
     .catch(error => {
       console.error('Произошла ошибка при обновлении профиля:', error);
       // Обработка ошибки, если необходимо
+    })
+    .finally(() => {
+      saveButton.textContent = 'Сохранить';
     });
 }
 
@@ -106,32 +112,20 @@ const handleNewCardFormSubmit = (evt) => {
       // Обработка ответа от сервера при необходимости
       console.log('Новая карточка добавлена:', newCardData);
       
-
       // Обновление информации на странице после добавления карточки
-      fetchData(apiUrlCards, token)
-        .then(cardsData => {
-          clearCards() //Если я просто добавлю карточку в DOM я ведь не смогу сразу удалить карточку, для удаления карточки придется перезагрузить сайт
-          renderInitialCards(cardsData);
-        });
-      
-      // Возврат текста кнопки к исходному значению
-      saveButton.textContent = 'Сохранить';
+      const newCardElement = createCard(newCardData, { deleteCard, addLike, openImagePopup }, userId);
+      addCard(newCardElement, cardsContainer);
       
       closePopup(newCardPopup);
       newCardForm.reset();
-      clearValidation(newCardForm, {
-        formSelector: '.popup',
-        contentSelector: '.popup__content',
-        inputSelector: '.popup__input',
-        submitButtonSelector: '.popup__button',
-        inactiveButtonClass: 'button_inactive',
-        inputErrorClass: 'popup__input_type_error',
-        errorClass: 'popup__input-error_active'
-      });
+      clearValidation(newCardForm, validationConfig);
     })
     .catch(error => {
       console.error('Произошла ошибка при добавлении новой карточки:', error);
       // Обработка ошибки, если необходимо
+    })
+    .finally(() => {
+      saveButton.textContent = 'Сохранить';
     });
 };
 
@@ -146,25 +140,10 @@ function openImagePopup(imageSrc, imageAlt) {
 }
 
 
-enableValidation({
-  formSelector: '.popup',
-  contentSelector: '.popup__content',
-  inputSelector: '.popup__input',
-  submitButtonSelector: '.popup__button',
-  inactiveButtonClass: 'button_inactive',
-  inputErrorClass: 'popup__input_type_error',
-  errorClass: 'popup__input-error_active'
-}); 
+enableValidation(validationConfig); 
 
 
-const token = '1eebc460-8f14-44d3-8f3a-287aa4f24719';
-const cohortId = 'wff-cohort-3';
-
-const apiUrlUser = `https://nomoreparties.co/v1/${cohortId}/users/me`;
-const apiUrlCards = `https://nomoreparties.co/v1/${cohortId}/cards`;
-
-
-Promise.all([fetchData(apiUrlUser, token), fetchData(apiUrlCards, token)])
+Promise.all([getUserData(), getCardsData()])
   .then(([userData, cardsData]) => {
     userId = userData._id;
     updateUserInfo(userData);
@@ -186,8 +165,6 @@ const updateUserInfo = (userInfo) => {
 
 
 export const renderInitialCards = (cardsData) => {
-  const cardsContainer = document.querySelector('.places__list');
-
   cardsData.forEach(cardData => {
     const cardElement = createCard(cardData, { deleteCard, addLike, openImagePopup }, userId);
     addCard(cardElement, cardsContainer);
@@ -210,12 +187,14 @@ avatarEditForm.addEventListener('submit', (evt) => {
     .then(updatedUserInfo => {
       // Обновление информации на странице
       avatarImage.style.backgroundImage = `url('${updatedUserInfo.avatar}')`;
-      saveButton.textContent = 'Сохранить';
       closePopup(avatarEditPopup);
     }) 
     .catch(error => {
       console.error('Произошла ошибка при обновлении аватара:', error);
       // Обработка ошибки, если необходимо
+    })
+    .finally(() => {
+      saveButton.textContent = 'Сохранить';
     });
 });
 
