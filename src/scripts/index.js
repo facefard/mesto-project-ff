@@ -114,7 +114,7 @@ const handleNewCardFormSubmit = (evt) => {
       
       // Обновление информации на странице после добавления карточки
       const newCardElement = createCard(newCardData, { deleteCard, addLike, openImagePopup }, userId);
-      addCard(newCardElement, cardsContainer);
+      cardsContainer.prepend(newCardElement);
       
       closePopup(newCardPopup);
       newCardForm.reset();

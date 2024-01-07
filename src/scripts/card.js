@@ -1,4 +1,5 @@
 import { checkResponse } from "./utils";
+import { addLike, deleteCard } from "./api";
 
 export function createCard(cardData, { deleteCard, addLike, openImagePopup }, currentUserId) {
   const cardTemplate = document.querySelector('#card-template').content;
@@ -23,28 +24,20 @@ export function createCard(cardData, { deleteCard, addLike, openImagePopup }, cu
   }
 
   deleteButton.addEventListener('click', () => { 
-    // Добавьте проверку наличия свойства _id перед его использованием 
-    if (cardData._id) { 
-      deleteCard(cardData._id)
-        .then(() => {
-          cardElement.remove();
-        })
-        .catch((error) => {
-          // Обработка ошибки при удалении карточки
-          console.error('Ошибка при удалении карточки:', error);
-        });
+    if (cardData._id) {
+      handleCardDeletion(cardData, deleteCard, cardElement);
     } else {
       console.error('Отсутствует свойство _id в объекте cardData');
     }
   });
 
+  if (cardData.likes && cardData.likes.some(like => like._id === currentUserId)) {
+    likeButton.classList.add('card__like-button_is-active');
+  }
+
   likeButton.addEventListener('click', () => {
     if (cardData._id) {
-      addLike(likeButton, cardData._id)
-        .then(updatedCardData => {
-          const likesCount = updatedCardData.likes.length;
-          updateLikeState(likeButton, isLiked, likesCount);
-        })
+      handleLikeClick(likeButton, cardData._id, isLiked, currentUserId);
     } else {
       console.error('Отсутствует свойство _id в объекте cardData');
     }
@@ -56,15 +49,31 @@ export function createCard(cardData, { deleteCard, addLike, openImagePopup }, cu
   return cardElement;
 }
 
-export const clearCards = () => {
-  const cardsContainer = document.querySelector('.places__list');
-  while (cardsContainer.firstChild) {
-    cardsContainer.removeChild(cardsContainer.firstChild);
-  }
-};
-
-function updateLikeState(likeButton, isLiked, likesCount) {
-  likeButton.classList.toggle('card__like-button_is-active', !isLiked);
+function updateLikeState(likeButton, updatedIsLiked, likesCount) {
+  likeButton.classList.toggle('card__like-button_is-active', updatedIsLiked);
   const likeCountElement = likeButton.closest('.places__item').querySelector('.card__like-count');
   likeCountElement.textContent = likesCount;
+}
+
+function handleCardDeletion(cardData, deleteCard, cardElement) {
+  deleteCard(cardData._id)
+    .then(() => {
+      cardElement.remove();
+    })
+    .catch((error) => {
+      // Обработка ошибки при удалении карточки
+      console.error('Ошибка при удалении карточки:', error);
+    });
+}
+
+function handleLikeClick(likeButton, cardId, isLiked, currentUserId) {
+  addLike(likeButton, cardId)
+    .then(updatedCardData => {
+      const updatedIsLiked = updatedCardData.likes.some(like => like._id === currentUserId);
+      const likesCount = updatedCardData.likes.length;
+      updateLikeState(likeButton, updatedIsLiked, likesCount);
+    })
+    .catch(error => {
+      console.error('Ошибка при обновлении лайка:', error);
+    });
 }
