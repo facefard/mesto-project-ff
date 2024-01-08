@@ -1,5 +1,5 @@
 import '../pages/index.css'
-import { createCard, clearCards } from './card';
+import { createCard, clearCards, handleCardDeletion, handleLikeClick } from './card';
 import { handleEscape, openPopup, closePopup, closeModalOverlay } from './modal';
 import { enableValidation, clearValidation } from './validation';
 import { fetchData, updateProfileInfo, updateAvatar, addNewCardToServer, deleteCard, addLike, getCardsData, getUserData} from './api';
@@ -113,7 +113,7 @@ const handleNewCardFormSubmit = (evt) => {
       console.log('Новая карточка добавлена:', newCardData);
       
       // Обновление информации на странице после добавления карточки
-      const newCardElement = createCard(newCardData, { deleteCard, addLike, openImagePopup }, userId);
+      const newCardElement = createCard(cardData, { handleCardDeletion, handleLikeClick, openImagePopup }, userId)
       cardsContainer.prepend(newCardElement);
       
       closePopup(newCardPopup);
@@ -166,7 +166,7 @@ const updateUserInfo = (userInfo) => {
 
 export const renderInitialCards = (cardsData) => {
   cardsData.forEach(cardData => {
-    const cardElement = createCard(cardData, { deleteCard, addLike, openImagePopup }, userId);
+    const cardElement = createCard(cardData, { handleCardDeletion, handleLikeClick, openImagePopup }, userId)
     addCard(cardElement, cardsContainer);
   });
 };

@@ -1,7 +1,7 @@
 import { checkResponse } from "./utils";
 import { addLike, deleteCard } from "./api";
 
-export function createCard(cardData, { deleteCard, addLike, openImagePopup }, currentUserId) {
+export function createCard(cardData, { handleCardDeletion, handleLikeClick, openImagePopup }, currentUserId) { 
   const cardTemplate = document.querySelector('#card-template').content;
   const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
   const cardImage = cardElement.querySelector('.card__image');
@@ -55,7 +55,7 @@ function updateLikeState(likeButton, updatedIsLiked, likesCount) {
   likeCountElement.textContent = likesCount;
 }
 
-function handleCardDeletion(cardData, deleteCard, cardElement) {
+export function handleCardDeletion(cardData, deleteCard, cardElement) {
   deleteCard(cardData._id)
     .then(() => {
       cardElement.remove();
@@ -66,7 +66,7 @@ function handleCardDeletion(cardData, deleteCard, cardElement) {
     });
 }
 
-function handleLikeClick(likeButton, cardId, isLiked, currentUserId) {
+export function handleLikeClick(likeButton, cardId, isLiked, currentUserId) {
   addLike(likeButton, cardId)
     .then(updatedCardData => {
       const updatedIsLiked = updatedCardData.likes.some(like => like._id === currentUserId);
